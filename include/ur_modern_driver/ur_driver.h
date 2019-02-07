@@ -33,6 +33,9 @@
 
 #include <chrono>
 
+/// RG2 gripper service
+#include "ur_control/RG2.h"
+#include "ur_control/RG2_Grip.h"
 
 class UrDriver {
 private:
@@ -50,8 +53,6 @@ private:
 	double servoj_time_;
 	bool executing_traj_;
 	double firmware_version_;
-	double servoj_lookahead_time_;
-	double servoj_gain_;
 public:
 	UrRealtimeCommunication* rt_interface_;
 	UrCommunication* sec_interface_;
@@ -60,7 +61,7 @@ public:
 			std::condition_variable& msg_cond, std::string host,
 			unsigned int reverse_port = 50007, double servoj_time = 0.016, unsigned int safety_count_max =
 					12, double max_time_step = 0.08, double min_payload = 0.,
-			double max_payload = 1., double servoj_lookahead_time=0.03, double servoj_gain=300.);
+			double max_payload = 1.);
 	bool start();
 	void halt();
 
@@ -93,8 +94,11 @@ public:
 	void setMinPayload(double m);
 	void setMaxPayload(double m);
 	void setServojTime(double t);
-	void setServojLookahead(double t);
-	void setServojGain(double g);
+
+    bool rg2Callback(ur_control::RG2::Request &req, ur_control::RG2::Response &res);
+    void rg2Control(float target_width, int target_force, double payload, bool set_payload, bool depth_compensation, bool slave);
+    void rg2GripDetect(); //Sends command to URControl
+//    bool rg2GripDetectServer(ur_control::RG2_Grip::Request &req, ur_control::RG2_Grip::Response &res);
 
 };
 

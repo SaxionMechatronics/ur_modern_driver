@@ -17,15 +17,16 @@
  */
 
 #include "ur_modern_driver/ur_driver.h"
+#include "std_msgs/String.h"
 
 UrDriver::UrDriver(std::condition_variable& rt_msg_cond,
 		std::condition_variable& msg_cond, std::string host,
 		unsigned int reverse_port, double servoj_time,
 		unsigned int safety_count_max, double max_time_step, double min_payload,
-		double max_payload, double servoj_lookahead_time, double servoj_gain) :
+		double max_payload) :
 		REVERSE_PORT_(reverse_port), maximum_time_step_(max_time_step), minimum_payload_(
 				min_payload), maximum_payload_(max_payload), servoj_time_(
-				servoj_time), servoj_lookahead_time_(servoj_lookahead_time), servoj_gain_(servoj_gain) {
+				servoj_time) {
 	char buffer[256];
 	struct sockaddr_in serv_addr;
 	int n, flag;
@@ -182,8 +183,8 @@ bool UrDriver::uploadProg() {
 	cmd_str += "\t\t\telif state == SERVO_RUNNING:\n";
 
 	if (sec_interface_->robot_state_->getVersion() >= 3.1)
-		sprintf(buf, "\t\t\t\tservoj(q, t=%.4f, lookahead_time=%.4f, gain=%.0f)\n",
-				servoj_time_, servoj_lookahead_time_, servoj_gain_);
+		sprintf(buf, "\t\t\t\tservoj(q, t=%.4f, lookahead_time=0.03)\n",
+				servoj_time_);
 	else
 		sprintf(buf, "\t\t\t\tservoj(q, t=%.4f)\n", servoj_time_);
 	cmd_str += buf;
@@ -358,25 +359,238 @@ void UrDriver::setServojTime(double t) {
 		servoj_time_ = 0.008;
 	}
 }
-void UrDriver::setServojLookahead(double t){
-	if (t > 0.03) {
-		if (t < 0.2) {
-			servoj_lookahead_time_ = t;
-		} else {
-			servoj_lookahead_time_ = 0.2;
-		}
-	} else {
-		servoj_lookahead_time_ = 0.03;
-	}
+
+bool UrDriver::rg2Callback(ur_control::RG2::Request &req, ur_control::RG2::Response &res)
+{
+    std::cout << "Reached service to contol RG2 gripper" << std::endl;
+//    if(!req.open_close.data)// if true then open else close
+//    {
+//        rg2Control(90, 0, 0, false, false, false);
+//    }
+//    else
+//        rg2Control(10, 0, 0, false, false, false);
+    rg2Control(req.target_width.data, 0, 0, false, false, false);
+    return true;
 }
-void UrDriver::setServojGain(double g){
-	if (g > 100) {
-			if (g < 2000) {
-				servoj_gain_ = g;
-			} else {
-				servoj_gain_ = 2000;
-			}
-		} else {
-			servoj_gain_ = 100;
-		}
+
+void UrDriver::rg2Control(float target_width, int target_force, double payload, bool set_payload, bool depth_compensation, bool slave)
+{
+
+    std::string cmd_str;
+
+    char buf[5000],buf_socket[5000];
+    sprintf(buf, "\ttarget_width=%f\n",target_width);
+    std::cout << "Reached service to control RG2 gripper" << std::endl;
+
+//    For testing purpose
+//    cmd_str = "def rg2ProgOpen():\n";
+//    cmd_str += "textmsg(\"rg2 open function called\")\n";
+//    cmd_str += "end\n";
+
+//    For passing parameters
+//    cmd_str = "def rg2Prog(target_width=110, target_force=40, payload=0.0, set_payload=False, depth_compensation=False, slave=False):\n";
+
+//    Parameters are set to default open position
+
+    cmd_str = "def rg2ProgOpen():\n";
+    cmd_str += "\ttextmsg(\"inside RG2 function called\")\n";
+
+//    cmd_str += "\ttarget_width=110\n";
+    cmd_str += buf;
+    cmd_str += "\ttarget_force=40\n";
+    cmd_str += "\tpayload=1.0\n";
+    cmd_str += "\tset_payload1=False\n";
+    cmd_str += "\tdepth_compensation=False\n";
+    cmd_str += "\tslave=False\n";
+
+    cmd_str += "\ttimeout = 0\n";
+    cmd_str += "\twhile get_digital_in(9) == False:\n";
+    cmd_str += "\t\ttextmsg(\"inside while\")\n";
+    cmd_str += "\t\tif timeout > 400:\n";
+    cmd_str += "\t\t\tbreak\n";
+    cmd_str += "\t\tend\n";
+    cmd_str += "\t\ttimeout = timeout+1\n";
+    cmd_str += "\t\tsync()\n";
+    cmd_str += "\tend\n";
+    cmd_str += "\ttextmsg(\"outside while\")\n";
+
+    cmd_str += "\tdef bit(input):\n";
+    cmd_str += "\t\tmsb=65536\n";
+    cmd_str += "\t\tlocal i=0\n";
+    cmd_str += "\t\tlocal output=0\n";
+    cmd_str += "\t\twhile i<17:\n";
+    cmd_str += "\t\t\tset_digital_out(8,True)\n";
+    cmd_str += "\t\t\tif input>=msb:\n";
+    cmd_str += "\t\t\t\tinput=input-msb\n";
+    cmd_str += "\t\t\t\tset_digital_out(9,False)\n";
+    cmd_str += "\t\t\telse:\n";
+    cmd_str += "\t\t\t\tset_digital_out(9,True)\n";
+    cmd_str += "\t\t\tend\n";
+    cmd_str += "\t\t\tif get_digital_in(8):\n";
+    cmd_str += "\t\t\t\tout=1\n";
+    cmd_str += "\t\t\tend\n";
+    cmd_str += "\t\t\tsync()\n";
+    cmd_str += "\t\t\tset_digital_out(8,False)\n";
+    cmd_str += "\t\t\tsync()\n";
+    cmd_str += "\t\t\tinput=input*2\n";
+    cmd_str += "\t\t\toutput=output*2\n";
+    cmd_str += "\t\t\ti=i+1\n";
+    cmd_str += "\t\tend\n";
+    cmd_str += "\t\treturn output\n";
+    cmd_str += "\tend\n";
+    cmd_str += "\ttextmsg(\"outside bit definition\")\n";
+
+
+    cmd_str += "\ttarget_width=target_width+0.0\n";
+//    cmd_str += "\ttarget_force=target_force+0.0\n";
+    cmd_str += "\tif target_force>40:\n";
+    cmd_str += "\t\ttarget_force=40\n";
+    cmd_str += "\tend\n";
+
+    cmd_str += "\tif target_force<4:\n";
+    cmd_str += "\t\ttarget_force=4\n";
+    cmd_str += "\tend\n";
+    cmd_str += "\tif target_width>110:\n";
+    cmd_str += "\t\ttarget_width=110\n";
+    cmd_str += "\tend\n";
+    cmd_str += "\tif target_width<0:\n";
+    cmd_str += "\t\ttarget_width=0\n";
+    cmd_str += "\tend\n";
+    cmd_str += "\trg_data=floor(target_width)*4\n";
+    cmd_str += "\trg_data=rg_data+floor(target_force/2)*4*111\n";
+    cmd_str += "\tif slave:\n";
+    cmd_str += "\t\trg_data=rg_data+16384\n";
+    cmd_str += "\tend\n";
+
+    cmd_str += "\ttextmsg(\"about to call bit\")\n";
+    cmd_str += "\tbit(rg_data)\n";
+    cmd_str += "\ttextmsg(\"called bit\")\n";
+
+    cmd_str += "\tif depth_compensation:\n";
+    cmd_str += "\t\tfinger_length = 55.0/1000\n";
+    cmd_str += "\t\tfinger_heigth_disp = 5.0/1000\n";
+    cmd_str += "\t\tcenter_displacement = 7.5/1000\n";
+
+    cmd_str += "\t\tstart_pose = get_forward_kin()\n";
+    cmd_str += "\t\tset_analog_inputrange(2, 1)\n";
+    cmd_str += "\t\tzscale = (get_analog_in(2)-0.026)/2.976\n";
+    cmd_str += "\t\tzangle = zscale*1.57079633-0.087266462\n";
+    cmd_str += "\t\tzwidth = 5+110*sin(zangle)\n";
+
+    cmd_str += "\t\tstart_depth = cos(zangle)*finger_length\n";
+
+
+    cmd_str += "\t\tsync()\n";
+    cmd_str += "\t\tsync()\n";
+    cmd_str += "\t\ttimeout = 0\n";
+
+    cmd_str += "\t\twhile get_digital_in(9) == True:\n";
+    cmd_str += "\t\t\ttimeout=timeout+1\n";
+    cmd_str += "\t\t\tsync()\n";
+    cmd_str += "\t\t\tif timeout > 20:\n";
+    cmd_str += "\t\t\t\tbreak\n";
+    cmd_str += "\t\t\tend\n";
+    cmd_str += "\t\tend\n";
+    cmd_str += "\t\ttimeout = 0\n";
+    cmd_str += "\t\twhile get_digital_in(9) == False:\n";
+    cmd_str += "\t\t\tzscale = (get_analog_in(2)-0.026)/2.976\n";
+    cmd_str += "\t\t\tzangle = zscale*1.57079633-0.087266462\n";
+    cmd_str += "\t\t\tzwidth = 5+110*sin(zangle)\n";
+    cmd_str += "\t\t\tmeasure_depth = cos(zangle)*finger_length\n";
+    cmd_str += "\t\t\tcompensation_depth = (measure_depth - start_depth)\n";
+    cmd_str += "\t\t\ttarget_pose = pose_trans(start_pose,p[0,0,-compensation_depth,0,0,0])\n";
+    cmd_str += "\t\t\tif timeout > 400:\n";
+    cmd_str += "\t\t\t\tbreak\n";
+    cmd_str += "\t\t\tend\n";
+    cmd_str += "\t\t\ttimeout=timeout+1\n";
+    cmd_str += "\t\t\tservoj(get_inverse_kin(target_pose),0,0,0.008,0.033,1700)\n";
+    cmd_str += "\t\tend\n";
+    cmd_str += "\t\tnspeed = norm(get_actual_tcp_speed())\n";
+    cmd_str += "\t\twhile nspeed > 0.001:\n";
+    cmd_str += "\t\t\tservoj(get_inverse_kin(target_pose),0,0,0.008,0.033,1700)\n";
+    cmd_str += "\t\t\tnspeed = norm(get_actual_tcp_speed())\n";
+    cmd_str += "\t\tend\n";
+    cmd_str += "\tend\n";
+    cmd_str += "\tif depth_compensation==False:\n";
+    cmd_str += "\t\ttimeout = 0\n";
+    cmd_str += "\t\twhile get_digital_in(9) == True:\n";
+    cmd_str += "\t\t\ttimeout = timeout+1\n";
+    cmd_str += "\t\t\tsync()\n";
+    cmd_str += "\t\t\tif timeout > 20:\n";
+    cmd_str += "\t\t\t\tbreak\n";
+    cmd_str += "\t\t\tend\n";
+    cmd_str += "\t\tend\n";
+    cmd_str += "\t\ttimeout = 0\n";
+    cmd_str += "\t\twhile get_digital_in(9) == False:\n";
+    cmd_str += "\t\t\ttimeout = timeout+1\n";
+    cmd_str += "\t\t\tsync()\n";
+    cmd_str += "\t\t\tif timeout > 400:\n";
+    cmd_str += "\t\t\t\tbreak\n";
+    cmd_str += "\t\t\tend\n";
+    cmd_str += "\t\tend\n";
+    cmd_str += "\tend\n";
+    cmd_str += "\tif set_payload1:\n";
+        cmd_str += "\t\tif slave:\n";
+        cmd_str += "\t\t\tif get_analog_in(3) < 2:\n";
+        cmd_str += "\t\t\t\tzslam=0\n";
+        cmd_str += "\t\t\telse:\n";
+        cmd_str += "\t\t\t\tzslam=payload\n";
+        cmd_str += "\t\t\tend\n";
+        cmd_str += "\t\telse:\n";
+        cmd_str += "\t\t\tif get_digital_in(8) == False:\n";
+        cmd_str += "\t\t\t\tzmasm=0\n";
+        cmd_str += "\t\t\telse:\n";
+        cmd_str += "\t\t\t\tzmasm=payload\n";
+        cmd_str += "\t\t\tend\n";
+        cmd_str += "\t\tend\n";
+        cmd_str += "\t\tzsysm=0.0\n";
+    cmd_str += "\t\tzload=zmasm+zslam+zsysm\n";
+    cmd_str += "\t\tset_payload(zload)\n";
+    cmd_str += "\tend\n";
+
+//    cmd_str += "\tzscale = (get_analog_in(2)-0.026)/2.976\n";
+//    cmd_str += "\tzangle = zscale*1.57079633-0.087266462\n";
+//    cmd_str += "\tzwidth = 5+110*sin(zangle)\n";
+//    cmd_str += "\tglobal measure_width = (floor(zwidth*10))/10-0.0\n";
+//    cmd_str += "\ttextmsg(\"width\",measure_width)\n";
+//    sprintf(buf_socket, "\tsocket_open(\"%s\", %i)\n", ip_addr_.c_str(),50002);
+//    cmd_str += buf_socket;
+//    cmd_str += "\t\tsocket_send_string(measure_width)\n";
+//    cmd_str += "\tsocket_close()\n";
+
+    cmd_str += "end\n";
+
+//    sprintf(buf, "rg2ProgOpen()\n");
+//    cmd_str += buf;
+
+//    sprintf(buf, "rg2Prog(%d, %d, %1.4f, %s, %s, %s)\n", target_width, target_force, payload, set_payload? "True" : "False", depth_compensation? "True" : "False", slave? "True" : "False");
+//    cmd_str += buf;
+
+    rt_interface_->addCommandToQueue(cmd_str);
+    std::cout << cmd_str << std::endl;
+}
+
+void UrDriver::rg2GripDetect()
+{
+    std::string cmd_str;
+    char buf_socket[5000];
+    /*
+     * TODO in Future.
+     *   grip_detected=False
+     *   if get_digital_in(8) == True:
+     *   grip_detected=True
+     */
+    cmd_str = "def rg2GripDetect():\n";
+    cmd_str += "\tzscale = (get_analog_in(2)-0.026)/2.976\n";
+    cmd_str += "\tzangle = zscale*1.57079633-0.087266462\n";
+    cmd_str += "\tzwidth = 5+110*sin(zangle)\n";
+    cmd_str += "\tglobal measure_width = (floor(zwidth*10))/10-0.0\n";
+    cmd_str += "\ttextmsg(\"width\",measure_width)\n";
+    sprintf(buf_socket, "\tsocket_open(\"%s\", %i)\n", ip_addr_.c_str(),50002);
+    cmd_str += buf_socket;
+    cmd_str += "\t\tsocket_send_string(measure_width)\n";
+    cmd_str += "\tsocket_close()\n";
+    cmd_str += "end\n";
+    rt_interface_->addCommandToQueue(cmd_str);
+    std::cout << cmd_str << std::endl;
 }
