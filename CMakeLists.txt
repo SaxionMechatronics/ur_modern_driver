@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   trajectory_msgs
   ur_msgs
   tf
+  ur_control
 )
 
 ## System dependencies are found with CMake's conventions
@@ -135,6 +136,7 @@ endif()
 # include_directories(include)
 include_directories(include
   ${catkin_INCLUDE_DIRS}
+  ${ur_control_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -163,7 +165,7 @@ add_executable(ur_driver ${${PROJECT_NAME}_SOURCES})
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
- add_dependencies(ur_driver ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(ur_driver ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(ur_driver
@@ -176,7 +178,6 @@ target_link_libraries(ur_driver
 #############
 
 install(DIRECTORY launch/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/launch)
-install(DIRECTORY config/ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config)
 
 ## Mark executables and/or libraries for installation
 install(TARGETS ur_driver ur_hardware_interface
