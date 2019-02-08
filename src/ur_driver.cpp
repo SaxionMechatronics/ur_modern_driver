@@ -18,6 +18,7 @@
 
 #include "ur_modern_driver/ur_driver.h"
 #include "std_msgs/String.h"
+#include <ros/console.h>
 
 UrDriver::UrDriver(std::condition_variable& rt_msg_cond,
 		std::condition_variable& msg_cond, std::string host,
@@ -362,7 +363,7 @@ void UrDriver::setServojTime(double t) {
 
 bool UrDriver::rg2Callback(ur_control::RG2::Request &req, ur_control::RG2::Response &res)
 {
-    std::cout << "Reached service to contol RG2 gripper" << std::endl;
+    ROS_INFO("Reached service to control RG2 gripper");
 //    if(!req.open_close.data)// if true then open else close
 //    {
 //        rg2Control(90, 0, 0, false, false, false);
@@ -380,7 +381,7 @@ void UrDriver::rg2Control(float target_width, int target_force, double payload, 
 
     char buf[5000],buf_socket[5000];
     sprintf(buf, "\ttarget_width=%f\n",target_width);
-    std::cout << "Reached service to control RG2 gripper" << std::endl;
+    // std::cout << "Reached service to control RG2 gripper" << std::endl;
 
 //    For testing purpose
 //    cmd_str = "def rg2ProgOpen():\n";
@@ -567,7 +568,7 @@ void UrDriver::rg2Control(float target_width, int target_force, double payload, 
 //    cmd_str += buf;
 
     rt_interface_->addCommandToQueue(cmd_str);
-    std::cout << cmd_str << std::endl;
+    // std::cout << cmd_str << std::endl;
 }
 
 void UrDriver::rg2GripDetect()
@@ -592,5 +593,5 @@ void UrDriver::rg2GripDetect()
     cmd_str += "\tsocket_close()\n";
     cmd_str += "end\n";
     rt_interface_->addCommandToQueue(cmd_str);
-    std::cout << cmd_str << std::endl;
+    // std::cout << cmd_str << std::endl;
 }
