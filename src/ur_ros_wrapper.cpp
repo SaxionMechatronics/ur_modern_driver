@@ -96,10 +96,10 @@ public:
 					6, 0.0) {
 
         // RG2 gripper
-        rg2_service = nh_.advertiseService<ur_control::RG2::Request, ur_control::RG2::Response>
+        rg2_service = nh_.advertiseService<robotao_rg2_gripper_driver::rg2_set_width::Request, robotao_rg2_gripper_driver::rg2_set_width::Response>
                 ("/rg2_gripper/control_width", boost::bind(&UrDriver::rg2Callback, &robot_, _1, _2));
         // RG2 Grip_Detect
-        rg2_detect_service = nh_.advertiseService<ur_control::RG2_Grip::Request, ur_control::RG2_Grip::Response>
+        rg2_detect_service = nh_.advertiseService<robotao_rg2_gripper_driver::rg2_object_gripped::Request, robotao_rg2_gripper_driver::rg2_object_gripped::Response>
                 ("/rg2_gripper/grip_detect", boost::bind(&RosWrapper::rg2GripDetectServer, this, _1, _2));
 
 
@@ -111,7 +111,7 @@ public:
 		    if (joint_prefix.length() > 0) {
     			sprintf(buf, "Setting prefix to %s", joint_prefix.c_str());
 	    		print_info(buf);
-	        }	
+	        }
         }
 		joint_names.push_back(joint_prefix + "shoulder_pan_joint");
 		joint_names.push_back(joint_prefix + "shoulder_lift_joint");
@@ -315,7 +315,7 @@ private:
 			print_error(result_.error_string);
 			return;
 		}
-        
+
 		if (!has_velocities()) {
 			result_.error_code = result_.INVALID_GOAL;
 			result_.error_string = "Received a goal without velocities";
@@ -748,7 +748,7 @@ private:
         got_data=true;
     }
 
-    bool rg2GripDetectServer(ur_control::RG2_Grip::Request &req, ur_control::RG2_Grip::Response &res)
+    bool rg2GripDetectServer(robotao_rg2_gripper_driver::rg2_object_gripped::Request &req, robotao_rg2_gripper_driver::rg2_object_gripped::Response &res)
     {
         bool flag = false;
         ros::Subscriber sub = nh_.subscribe<std_msgs::Bool>("rg2_gripped", 1, boost::bind(&RosWrapper::rg2GripDetectcallback, this, _1,boost::ref(flag)));

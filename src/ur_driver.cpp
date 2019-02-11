@@ -361,7 +361,7 @@ void UrDriver::setServojTime(double t) {
 	}
 }
 
-bool UrDriver::rg2Callback(ur_control::RG2::Request &req, ur_control::RG2::Response &res)
+bool UrDriver::rg2Callback(robotao_rg2_gripper_driver::rg2_set_width::Request &req, robotao_rg2_gripper_driver::rg2_set_width::Response &res)
 {
     ROS_INFO("Reached service to control RG2 gripper");
 //    if(!req.open_close.data)// if true then open else close
