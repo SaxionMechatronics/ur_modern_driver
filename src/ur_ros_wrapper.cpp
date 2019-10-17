@@ -96,10 +96,10 @@ public:
 					6, 0.0) {
 
         // RG2 gripper
-        rg2_service = nh_.advertiseService<robotao_rg2_gripper_driver::rg2_set_width::Request, robotao_rg2_gripper_driver::rg2_set_width::Response>
+        rg2_service = nh_.advertiseService<robotao_msgs::Rg2SetWidth::Request, robotao_msgs::Rg2SetWidth::Response>
                 ("/rg2_gripper/control_width", boost::bind(&UrDriver::rg2Callback, &robot_, _1, _2));
         // RG2 Grip_Detect
-        rg2_detect_service = nh_.advertiseService<robotao_rg2_gripper_driver::rg2_object_gripped::Request, robotao_rg2_gripper_driver::rg2_object_gripped::Response>
+        rg2_detect_service = nh_.advertiseService<robotao_msgs::Rg2ObjectGripped::Request, robotao_msgs::Rg2ObjectGripped::Response>
                 ("/rg2_gripper/grip_detect", boost::bind(&RosWrapper::rg2GripDetectServer, this, _1, _2));
 
 
@@ -748,7 +748,7 @@ private:
         got_data=true;
     }
 
-    bool rg2GripDetectServer(robotao_rg2_gripper_driver::rg2_object_gripped::Request &req, robotao_rg2_gripper_driver::rg2_object_gripped::Response &res)
+    bool rg2GripDetectServer(robotao_msgs::Rg2ObjectGripped::Request &req, robotao_msgs::Rg2ObjectGripped::Response &res)
     {
         bool flag = false;
         ros::Subscriber sub = nh_.subscribe<std_msgs::Bool>("rg2_gripped", 1, boost::bind(&RosWrapper::rg2GripDetectcallback, this, _1,boost::ref(flag)));

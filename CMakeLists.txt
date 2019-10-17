@@ -16,7 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   trajectory_msgs
   ur_msgs
   tf
-  robotao_rg2_gripper_driver
+  robotao_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -111,7 +111,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES ur_modern_driver
-  CATKIN_DEPENDS hardware_interface controller_manager actionlib control_msgs geometry_msgs roscpp sensor_msgs trajectory_msgs ur_msgs
+  CATKIN_DEPENDS hardware_interface controller_manager actionlib control_msgs geometry_msgs roscpp sensor_msgs trajectory_msgs ur_msgs robotao_msgs
   DEPENDS
 )
 
@@ -136,7 +136,6 @@ endif()
 # include_directories(include)
 include_directories(include
   ${catkin_INCLUDE_DIRS}
-  ${robotao_rg2_gripper_driver_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library

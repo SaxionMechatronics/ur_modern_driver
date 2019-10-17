@@ -34,8 +34,8 @@
 #include <chrono>
 
 /// RG2 gripper service
-#include "robotao_rg2_gripper_driver/rg2_set_width.h"
-#include "robotao_rg2_gripper_driver/rg2_object_gripped.h"
+#include "robotao_msgs/Rg2SetWidth.h"
+#include "robotao_msgs/Rg2ObjectGripped.h"
 
 class UrDriver {
 private:
@@ -95,10 +95,10 @@ public:
 	void setMaxPayload(double m);
 	void setServojTime(double t);
 
-    bool rg2Callback(robotao_rg2_gripper_driver::rg2_set_width::Request &req, robotao_rg2_gripper_driver::rg2_set_width::Response &res);
+    bool rg2Callback(robotao_msgs::Rg2SetWidth::Request &req, robotao_msgs::Rg2SetWidth::Response &res);
     void rg2Control(float target_width, int target_force, double payload, bool set_payload, bool depth_compensation, bool slave);
     void rg2GripDetect(); //Sends command to URControl
-//    bool rg2GripDetectServer(robotao_rg2_gripper_driver::rg2_object_gripped::Request &req, robotao_rg2_gripper_driver::rg2_object_gripped::Response &res);
+//    bool rg2GripDetectServer(robotao_msgs::Rg2ObjectGripped::Request &req, robotao_msgs::Rg2ObjectGripped::Response &res);
 
 };
 
